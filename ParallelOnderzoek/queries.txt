@@ -1,0 +1,44 @@
+﻿SELECT Customers.CustomerNumber AS CustomerNumber,
+Customers.CustomerName AS CustomerName,
+Customers.AddressLine AS CustomerAddress,
+Employees.JobTitle AS SalesRepJob,
+Payments.Amount AS PayedAmount,
+Payments.PaymentDate AS PayedDate,
+Orders.OrderDate AS DateOrdered,
+Orders.Status AS OrderStatus,
+OrderDetails.ProductCode AS ProductCode,
+OrderDetails.QuantityOrdered AS ProductsQuantity
+FROM Customers
+JOIN Payments ON Customers.CustomerNumber = Payments.CustomerNumber
+AND Payments.Amount > 200
+LEFT JOIN Employees ON Customers.SalesRepEmployeeNumber = Employees.EmployeeNumber
+JOIN Orders ON Customers.CustomerNumber = Orders.CustomerNumber
+AND Orders.Status != ''
+JOIN OrderDetails ON Orders.OrderNumber = OrderDetails.OrderNumber
+ORDER BY Employees.JobTitle;
+SELECT Orders.OrderNumber AS OrderNumber,
+Orders.Status AS OrderStatus,
+OrderDetails.ProductCode AS OrderedProduct,
+OrderDetails.QuantityOrdered AS ProductQuantity,
+Products.*
+FROM Orders
+JOIN OrderDetails ON Orders.OrderNumber = OrderDetails.OrderNumber
+JOIN Products ON OrderDetails.ProductCode = Products.ProductCode
+AND Products.QuantityInStock > 500
+ORDER BY 1;
+SELECT ProductLines.ProductLine,
+Products.*
+FROM ProductLines
+LEFT JOIN Products ON ProductLines.ProductLine = Products.ProductLine
+AND Products.QuantityInStock > 600
+ORDER BY 1;
+SELECT Orders.OrderNumber, Orders.OrderDate, Orders.Status,
+Customers.CustomerName,
+OrderDetails.PriceEach,
+Products.ProductLine
+FROM Orders
+JOIN Customers ON Orders.CustomerNumber = Customers.CustomerNumber
+LEFT JOIN OrderDetails ON Orders.OrderNumber = OrderDetails.OrderNumber
+JOIN Products ON OrderDetails.ProductCode = Products.ProductCode
+AND OrderDetails.PriceEach > 80
+ORDER BY 1
