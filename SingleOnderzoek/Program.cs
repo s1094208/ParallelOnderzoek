@@ -10,19 +10,17 @@ using System.Data;
 using System.Diagnostics;
 using System.Threading.Tasks.Dataflow;
 
-namespace ParallelOnderzoek
+namespace SingleOnderzoek
 {
 	public class Program
 	{
-		public static int currentQueryIndex { get; set; }
-		public static string[] ReadQueries()
+		public static string ReadQuery()
 		{
-			string path = "queries2.txt";
+			string path = "query.txt";
 
-			string readText = File.ReadAllText(path);
-			string[] queries = readText.Split(';');
+			string query = File.ReadAllText(path);
 
-			return queries;
+			return query;
 		}
 
 		public static void ExecuteQuery(string query)
@@ -53,7 +51,7 @@ namespace ParallelOnderzoek
 
 				var columnNames = new List<string>();
 
-				foreach(DataColumn column in dataTable.Columns)
+				foreach (DataColumn column in dataTable.Columns)
 				{
 					columnNames.Add(column.ColumnName);
 				}
@@ -70,28 +68,22 @@ namespace ParallelOnderzoek
 
 		public static void ExecuteParallel(int amountParallel)
 		{
-			string[] queries = ReadQueries();
+			string query = ReadQuery();
 
 			Parallel.For(0, amountParallel,
 				number =>
 				{
-					currentQueryIndex++;
-					if (currentQueryIndex > queries.Length-1)
-					{
-						currentQueryIndex = 0;
-					}
-					Console.WriteLine("De huidige query is " + currentQueryIndex);
-					ExecuteQuery(queries[currentQueryIndex]);
+					ExecuteQuery(query);
 				});
 		}
 
 		public static void ExecuteBlock(int amountParallel)
 		{
-			string[] queries = ReadQueries();
+			string query = ReadQuery();
 
-			var myExecutionBlock = new ActionBlock<int>(queryIndex =>
+			var myExecutionBlock = new ActionBlock<string>(myQuery =>
 			{
-				ExecuteQuery(queries[queryIndex]);
+				ExecuteQuery(myQuery);
 			}, new ExecutionDataflowBlockOptions
 			{
 				MaxDegreeOfParallelism = amountParallel
@@ -99,14 +91,9 @@ namespace ParallelOnderzoek
 
 			int amountIndex = 0;
 
-			while(amountIndex < amountParallel)
+			while (amountIndex < amountParallel)
 			{
-				currentQueryIndex++;
-				if (currentQueryIndex > queries.Length - 1)
-				{
-					currentQueryIndex = 0;
-				}
-				myExecutionBlock.Post(currentQueryIndex);
+				myExecutionBlock.Post(query);
 				amountIndex++;
 			}
 
@@ -118,9 +105,7 @@ namespace ParallelOnderzoek
 
 		public static void ExecuteEverything(int amountOfQueries, int amountParallel)
 		{
-			string path = "half100k.txt";
-
-			currentQueryIndex = -1;
+			string path = "times100k.txt";
 
 			Stopwatch stopWatch = new Stopwatch();
 			stopWatch.Start();
@@ -146,15 +131,15 @@ namespace ParallelOnderzoek
 		public static List<int> CalculateAmountParallel(int amountOfQueries)
 		{
 			var parallelValueList = new List<int>();
-			//parallelValueList.Add(4);
+			parallelValueList.Add(1);
 
-			int amountToDevide = amountOfQueries/2;
+			int amountToDevide = amountOfQueries;
 
-			while(amountToDevide > 1)
+			while (amountToDevide > 1)
 			{
 				amountToDevide /= 2;
 				parallelValueList.Add(amountOfQueries / amountToDevide);
-				Console.WriteLine(amountToDevide + " sequentieel en " + amountOfQueries/amountToDevide + "parallel");
+				Console.WriteLine(amountToDevide + " sequentieel en " + amountOfQueries / amountToDevide + "parallel");
 			}
 
 			return parallelValueList;
@@ -168,11 +153,14 @@ namespace ParallelOnderzoek
 				var input = Console.ReadLine();
 				int amount;
 
-				if(Int32.TryParse(input, out amount))
+				if (Int32.TryParse(input, out amount))
 				{
 					Console.WriteLine(amount + " queries");
 
 					List<int> parallelValues = CalculateAmountParallel(amount);
+
+					string query = ReadQuery();
+					ExecuteQuery(query);
 
 					foreach (int parallelValue in parallelValues)
 					{
