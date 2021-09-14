@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using System.Data;
 using System.Diagnostics;
 using System.Threading.Tasks.Dataflow;
+using Microsoft.SqlServer.Management.Smo;
+using System.Text.RegularExpressions;
 
 namespace SingleOnderzoek
 {
@@ -31,38 +33,48 @@ namespace SingleOnderzoek
 			string connString = @"Data Source=" + cfg.Connection.DataSource + ";Initial Catalog="
 				+ cfg.Connection.Database + ";Persist Security Info=True;User ID=" + cfg.Connection.Username + ";Password=" + cfg.Connection.Password;
 
+			Regex regex = new Regex("^GO", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+			string[] lines = regex.Split(query);
+
 			//create instance of database connection
 			SqlConnection conn = new SqlConnection(connString);
 
-			try
+			foreach (string line in lines)
 			{
-
-				//open connection
-				conn.Open();
-
-				DataTable dataTable = new DataTable();
-
-				using (SqlCommand command = new SqlCommand(query, conn))
+				if (line.Length > 0)
 				{
-					SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
-					dataAdapter.Fill(dataTable);
-					dataAdapter.Dispose();
+					try
+					{
+
+						//open connection
+						conn.Open();
+
+						DataTable dataTable = new DataTable();
+
+						using (SqlCommand command = new SqlCommand(line, conn))
+						{
+							command.CommandTimeout = 90;
+							SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+							dataAdapter.Fill(dataTable);
+							dataAdapter.Dispose();
+						}
+
+						var columnNames = new List<string>();
+
+						foreach (DataColumn column in dataTable.Columns)
+						{
+							columnNames.Add(column.ColumnName);
+						}
+
+						Console.WriteLine(columnNames.Count);
+
+						conn.Close();
+					}
+					catch (Exception e)
+					{
+						Console.WriteLine("Error: " + e.Message);
+					}
 				}
-
-				var columnNames = new List<string>();
-
-				foreach (DataColumn column in dataTable.Columns)
-				{
-					columnNames.Add(column.ColumnName);
-				}
-
-				Console.WriteLine(columnNames.Count);
-
-				conn.Close();
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine("Error: " + e.Message);
 			}
 		}
 
@@ -100,12 +112,12 @@ namespace SingleOnderzoek
 			myExecutionBlock.Complete();
 			myExecutionBlock.Completion.Wait();
 
-			Console.WriteLine("Finised");
+			Console.WriteLine("Finished");
 		}
 
 		public static void ExecuteEverything(int amountOfQueries, int amountParallel)
 		{
-			string path = "times100k.txt";
+			string path = "times100k2.txt";
 
 			Stopwatch stopWatch = new Stopwatch();
 			stopWatch.Start();

@@ -36,35 +36,41 @@ namespace ParallelOnderzoek
 			//create instance of database connection
 			SqlConnection conn = new SqlConnection(connString);
 
-			try
+			string[] fullQuery = new string[] { "CHECKPOINT", "DBCC DROPCLEANBUFFERS", query };
+
+			foreach(string queryPart in fullQuery)
 			{
-
-				//open connection
-				conn.Open();
-
-				DataTable dataTable = new DataTable();
-
-				using (SqlCommand command = new SqlCommand(query, conn))
+				try
 				{
-					SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
-					dataAdapter.Fill(dataTable);
-					dataAdapter.Dispose();
+
+					//open connection
+					conn.Open();
+
+					DataTable dataTable = new DataTable();
+
+					using (SqlCommand command = new SqlCommand(queryPart, conn))
+					{
+						command.CommandTimeout = 90;
+						SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+						dataAdapter.Fill(dataTable);
+						dataAdapter.Dispose();
+					}
+
+					var columnNames = new List<string>();
+
+					foreach (DataColumn column in dataTable.Columns)
+					{
+						columnNames.Add(column.ColumnName);
+					}
+
+					Console.WriteLine(columnNames.Count);
+
+					conn.Close();
 				}
-
-				var columnNames = new List<string>();
-
-				foreach(DataColumn column in dataTable.Columns)
+				catch (Exception e)
 				{
-					columnNames.Add(column.ColumnName);
+					Console.WriteLine("Error: " + e.Message);
 				}
-
-				Console.WriteLine(columnNames.Count);
-
-				conn.Close();
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine("Error: " + e.Message);
 			}
 		}
 
@@ -118,7 +124,7 @@ namespace ParallelOnderzoek
 
 		public static void ExecuteEverything(int amountOfQueries, int amountParallel)
 		{
-			string path = "half100k.txt";
+			string path = "times100k2.txt";
 
 			currentQueryIndex = -1;
 
@@ -174,10 +180,10 @@ namespace ParallelOnderzoek
 
 					List<int> parallelValues = CalculateAmountParallel(amount);
 
-					foreach (int parallelValue in parallelValues)
-					{
-						ExecuteEverything(amount / parallelValue, parallelValue);
-					}
+					//foreach (int parallelValue in parallelValues)
+					//{
+					//	ExecuteEverything(amount / parallelValue, parallelValue);
+					//}
 
 					Console.WriteLine("Done!");
 				}

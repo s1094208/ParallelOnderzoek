@@ -1,4 +1,8 @@
-﻿SELECT Customers.CustomerNumber AS CustomerNumber,
+﻿CHECKPOINT; 
+GO 
+DBCC DROPCLEANBUFFERS; 
+GO
+SELECT Customers.CustomerNumber AS CustomerNumber,
 Customers.CustomerName AS CustomerName,
 Customers.AddressLine AS CustomerAddress,
 Employees.JobTitle AS SalesRepJob,
@@ -10,9 +14,9 @@ OrderDetails.ProductCode AS ProductCode,
 OrderDetails.QuantityOrdered AS ProductsQuantity
 FROM Customers
 JOIN Payments ON Customers.CustomerNumber = Payments.CustomerNumber
-AND Payments.Amount > 200
 LEFT JOIN Employees ON Customers.SalesRepEmployeeNumber = Employees.EmployeeNumber
 JOIN Orders ON Customers.CustomerNumber = Orders.CustomerNumber
 AND Orders.Status != ''
 JOIN OrderDetails ON Orders.OrderNumber = OrderDetails.OrderNumber
-ORDER BY Employees.JobTitle
+ORDER BY Employees.JobTitle;
+GO

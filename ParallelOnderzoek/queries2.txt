@@ -10,7 +10,6 @@ OrderDetails.ProductCode AS ProductCode,
 OrderDetails.QuantityOrdered AS ProductsQuantity
 FROM Customers
 JOIN Payments ON Customers.CustomerNumber = Payments.CustomerNumber
-AND Payments.Amount > 200
 LEFT JOIN Employees ON Customers.SalesRepEmployeeNumber = Employees.EmployeeNumber
 JOIN Orders ON Customers.CustomerNumber = Orders.CustomerNumber
 AND Orders.Status != ''
